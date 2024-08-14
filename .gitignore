@@ -39,6 +39,10 @@ bin/
 .vscode/
 
 ### Mac OS ###
+
+
 .DS_Store
-/src/main/domates
-/src/main/text
+/src/main/test/domates
+/src/main/test/text
+/src/main/test/patates
+/src/main/kotlin/main.kt

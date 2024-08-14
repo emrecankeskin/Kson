@@ -1,15 +1,16 @@
 
 class JsonObject(
     private val str: String,
-    private var ptr: Int = 0
 ) {
 
-    // Implement better type for JsonValues
+    //TODO after fully implement the library try another ways to represent Json Data
     val values = LinkedHashMap<String,Any>()
+    private var ptr = 0
 
     init {
         this.parse()
     }
+
     private fun parse(){
 
         while(ptr < str.length){
@@ -30,6 +31,19 @@ class JsonObject(
                 value = parseString()
             }else if(str[ptr] == 't' || c == 'f' || c == 'n'){
                 value = parseBoolean()
+            }else if(c == '{'){
+                val start = ptr
+                while(ptr< str.length){
+                    if(str[ptr] == '\\'){
+                        ptr++
+                    }else if(str[ptr] == '}'){
+                        break
+                    }
+                    ptr++
+                }
+                value = JsonObject(str.substring(start,ptr))
+            }else if(c == '['){
+                TODO("Parse Json Array")
             }
 
             if(key.isNotEmpty()){
@@ -49,6 +63,7 @@ class JsonObject(
     }
 
     //TODO check if this is better than returning String?
+    //TODO can i build this with stringbuilder and pass escape chars
     private fun parseString(): String{
         // skip starting of string
         val start = ++ptr
@@ -78,19 +93,19 @@ class JsonObject(
         return String()
     }
 
-    private fun parseNumber(): String{
+    private fun parseNumber(): Int{
         val start = ptr
         while(ptr < str.length){
             val c: Char = str[ptr]
             if(c.isDigit()){
                 ptr++
             }else{
-                return str.substring(start,ptr)
+                return str.substring(start,ptr).toInt()
             }
 
         }
 
-        return ""
+        return 0
     }
     private fun parseBoolean(): String{
         val start = ptr
