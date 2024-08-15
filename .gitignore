@@ -42,7 +42,5 @@ bin/
 
 
 .DS_Store
-/src/main/test/domates
-/src/main/test/text
-/src/main/test/patates
+/src/main/test/
 /src/main/kotlin/main.kt

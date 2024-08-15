@@ -6,7 +6,7 @@ import java.io.InputStream
 
 class JsonObjectTest {
 
-    private val filePath = "/home/emrecan/IdeaProjects/Kson/src/main/domates"
+    private val filePath = "../Kson/src/main/test/domates"
     private val ins: InputStream = File(filePath).inputStream()
     private val str = ins.bufferedReader().use { it.readText() }
     private val parser = JsonObject(str)

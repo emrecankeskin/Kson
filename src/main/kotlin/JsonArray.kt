@@ -3,9 +3,9 @@
 
 class JsonArray(
     private val str: String,
-)  {
+) {
 
-    val values = ArrayList<Any>()
+    val list = ArrayList<Any>()
     private var ptr = 0
 
     init {
@@ -13,54 +13,76 @@ class JsonArray(
     }
 
     private fun parse(){
+        skipToStart()
         while(ptr < str.length){
-            var value: Any = ""
-            skipToStart()
-            if(ptr >= str.length){
-                return
-            }
+            var value= Any()
+
             val c = str[ptr]
 
-            if( (c.isDigit() || c == '-')){
-                value = parseNumber()
-            }else if(c == '"'){
-                value = parseString()
-            }else if(str[ptr] == 't' || c == 'f' || c == 'n'){
-                value = parseBoolean()
-            }else if(c == '{'){
-                val start = ptr
-                while(ptr< str.length){
-                    if(str[ptr] == '\\'){
-                        ptr++
-                    }else if(str[ptr] == '}'){
-                        break
-                    }
-                    ptr++
+
+            when(c){
+                 '0','1','2','3','4','5','6','7','8','9','-' ->{
+                    value = parseNumber()
                 }
-                value = JsonObject(str.substring(start,ptr))
-            }else if(c == '['){
-                val start = ptr
-                moveToEnd(c)
-                value = JsonArray(str.substring(start,ptr))
+                '"' ->{
+                    value = parseString()
+                }
+                't' , 'f' ,'n' -> {
+                    value = parseBoolean()
+                }
+                '{' -> {
+                    val start = ptr
+                    moveToEnd('{','}')
+                    value = JsonObject(str.substring(start,ptr))
+                }
+
+                '[' -> {
+                    val start = ptr
+                    moveToEnd('[',']')
+                    value = JsonArray(str.substring(start,ptr))
+                }
+                ',',' ','\n','\t','}' ->{
+                    ptr++
+                    continue
+                }
+                ']' ->{
+                    break
+                }
             }
+
             ptr++
-            values.add(value)
+            list.add(value)
         }
     }
 
-    private fun moveToEnd(c : Char){
-        while(ptr< str.length){
+    private fun moveToEnd(open : Char,close: Char){
+        var count = 0
+        do{
             if(str[ptr] == '\\'){
                 ptr++
-            }else if(str[ptr] == c){
-                break
+            }else if(str[ptr] == open){
+                count++
+            }else if(str[ptr] == close){
+                count--
             }
             ptr++
-        }
+        }while(count != 0)
     }
 
     private fun skipToStart(){
-        while(ptr < str.length && str[ptr] != '"') ptr++
+        while(ptr < str.length){
+            if(str[ptr] == ' '){
+                ptr++
+            }else if(str[ptr] == '\n'){
+                ptr++
+            }else if(str[ptr] == '\t'){
+                ptr++
+            }else if(str[ptr] == '['){
+                ptr++
+            } else{
+                return
+            }
+        }
     }
 
     private fun parseString(): String{
@@ -96,9 +118,10 @@ class JsonArray(
         val start = ptr
         while(ptr < str.length){
             val c: Char = str[ptr]
-            if(c.isDigit()){
+            if(c.isDigit() || c == '-' || c =='e' || c == 'E'){
                 ptr++
             }else{
+                //ptr++
                 return str.substring(start,ptr).toInt()
             }
 
@@ -120,4 +143,12 @@ class JsonArray(
         return ""
     }
 
+
+    fun get(index: Int): Any? {
+        return if (index in list.indices) list[index] else null
+    }
+
+    inline fun <reified T> getAs(index: Int): T? {
+        return get(index) as? T
+    }
 }
