@@ -13,12 +13,10 @@ class JsonArray(
     }
 
     private fun parse(){
-        skipToStart()
+        ptr++
         while(ptr < str.length){
             var value= Any()
-
             val c = str[ptr]
-
 
             when(c){
                  '0','1','2','3','4','5','6','7','8','9','-' ->{
@@ -69,7 +67,9 @@ class JsonArray(
         }while(count != 0)
     }
 
+    //TEST
     private fun skipToStart(){
+        /*
         while(ptr < str.length){
             if(str[ptr] == ' '){
                 ptr++
@@ -82,6 +82,11 @@ class JsonArray(
             } else{
                 return
             }
+        }
+
+         */
+        while(str[ptr] == '['){
+            ptr++
         }
     }
 
@@ -96,6 +101,8 @@ class JsonArray(
                 ptr++
                 return str.substring(start,ptr-1)
             }
+
+            //should i check for ptr+1 < str.length library only parses validated jsons
             if(c == '\\' && ptr+1 < str.length){
 
                 ptr++
