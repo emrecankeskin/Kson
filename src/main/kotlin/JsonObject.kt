@@ -1,69 +1,77 @@
 
+
+
+
+/**
+ * There is no validation for anything, it assumes that coming json object is valid
+ *
+ *
+ * */
+
 class JsonObject(
     private val str: String,
 ) {
 
     val values = LinkedHashMap<String,Any>()
+
     private var ptr: Int = 0
 
     init {
+
         this.parse()
     }
 
     //Used enums with state-machine like solution, but it was 10 ms slower with 608k char file
-    private fun parse(){
+    private inline fun parse(){
 
         // 1 0 -> 0 0 -> 1 1
         var keyParse = true
-        var valParse = false
-        var value: Any = ""
+        var value: Any = Any()
         var key  = ""
 
         while(str[ptr] == '{'){
             ptr++
         }
         //ptr < str.length
-        while(ptr < str.length){
-
+        while(true){
 
             val c = str[ptr]
             when(c){
                 '0','1','2','3','4','5','6','7','8','9','-' ->{
-                    valParse = true
                     keyParse = true
                     value = parseNumber()
+                    values[key] = value
                 }
                 '"' ->{
                     if(keyParse){
                         keyParse = false
-                        valParse = false
                         key = parseString()
                     }else{
-                        valParse = true
                         keyParse = true
                         value = parseString()
+                        values[key] = value
                     }
 
                 }
                 't' , 'f' ,'n' -> {
-                    valParse = true
                     keyParse = true
                     value = parseBoolean()
+                    values[key] = value
                 }
                 '{' -> {
                     val start = ptr
                     moveToEnd('{','}')
-                    valParse = true
                     keyParse = true
                     value = JsonObject(str.substring(start,ptr))
+                    values[key] = value
                 }
 
                 '[' -> {
                     val start = ptr
                     moveToEnd('[',']')
-                    valParse = true
                     keyParse = true
                     value = JsonArray(str.substring(start,ptr))
+                    values[key] = value
                 }
                 ',',' ',':','\n','\t' ->{
                     ptr++
@@ -73,27 +81,31 @@ class JsonObject(
                     break
                 }
             }
-            if(valParse){
-                values[key] = value
-            }
 
         }
 
     }
 
+    // [: 91 ]: 93  { ->123  } 125
+    //TODO bottleneck try to find better solution
     private fun moveToEnd(open : Char,close: Char){
         var count = 0
+
         do{
-            if(str[ptr] == '\\'){
-                ptr++
-            }else if(str[ptr] == open){
+            val c = str[ptr]
+            if(c == open){
+
                 count++
-            }else if(str[ptr] == close){
+            }else if(c == close){
                 count--
             }
             ptr++
         }while(count != 0)
+
+
     }
+
+
 
 
     //TODO check if this is better than returning String?
@@ -102,36 +114,31 @@ class JsonObject(
         // skip starting of string
         val start = ++ptr
 
-        while(ptr < str.length){
+        while(true){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
                 ptr++
                 return str.substring(start,ptr-1)
             }
-            if(c == '\\' && ptr+1 < str.length){
-
+            //&& ptr+1 < str.length
+            if(c == '\\'){
                 ptr++
-                when(str[ptr]){
-                    '\"','/','\\','b','f','r','n','t' -> {
-                        //allow to do nothing
-                    }
-                    else -> {
-                        return String()
-                    }
-                }
             }
             ptr++
         }
 
-        return String()
     }
 
+    /**
+     * Returns Double or Long
+     *
+     * */
     private fun parseNumber(): Number{
         val start = ptr
         var dot = false
 
-        while(ptr < str.length){
+        while(true){
             val c: Char = str[ptr]
             when{
                 c.isDigit() || c == '-' -> {
@@ -142,29 +149,30 @@ class JsonObject(
                     ptr++
                 }
                 else -> {
-                    break
+                    return if(dot){
+                        str.substring(start,ptr).toDouble()
+                    }else{
+                        str.substring(start,ptr).toLong()
+                    }
                 }
             }
         }
 
-        return if(dot){
-            str.substring(start,ptr).toDouble()
-        }else{
-            str.substring(start,ptr).toLong()
-        }
     }
-    private fun parseBoolean(): String{
+
+
+    private fun parseBoolean(): Boolean{
         val start = ptr
-        while(ptr < str.length){
+        while(true){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
-                return str.substring(start,ptr)
+                return str.substring(start,ptr).toBoolean()
             }
             ptr++
 
         }
 
-        return ""
+        //return false
     }
 
 
