@@ -1,9 +1,7 @@
-{"arr" : [
-
-     {
+{
+     "obj":{
        "Name" : "Nested Object"
      },
-     [ 10, 20, true, 40, "Nested Array" ]
-]
+     "arr": [ 10, 20, true, 40, "Nested Array" ]
 }
 

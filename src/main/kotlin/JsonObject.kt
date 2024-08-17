@@ -1,7 +1,3 @@
-
-
-
-
 /**
  * There is no validation for anything, it assumes that coming json object is valid
  *
@@ -10,19 +6,21 @@
 
 class JsonObject(
     private val str: String,
+    internal val start: Int = 0
 ) {
 
     val values = LinkedHashMap<String,Any>()
+    internal var ptr: Int
 
-    private var ptr: Int = 0
+
 
     init {
-
+        this.ptr = start
         this.parse()
     }
 
     //Used enums with state-machine like solution, but it was 10 ms slower with 608k char file
-    private inline fun parse(){
+    private fun parse(){
 
         // 1 0 -> 0 0 -> 1 1
         var keyParse = true
@@ -59,18 +57,17 @@ class JsonObject(
                     values[key] = value
                 }
                 '{' -> {
-                    val start = ptr
-                    moveToEnd('{','}')
+
                     keyParse = true
-                    value = JsonObject(str.substring(start,ptr))
+                    value = JsonObject(str, ptr)
+                    ptr = value.ptr + 1
                     values[key] = value
                 }
 
                 '[' -> {
-                    val start = ptr
-                    moveToEnd('[',']')
                     keyParse = true
-                    value = JsonArray(str.substring(start,ptr))
+                    value = JsonArray(str, ptr)
+                    ptr = value.ptr + 1
                     values[key] = value
                 }
                 ',',' ',':','\n','\t' ->{
@@ -85,27 +82,6 @@ class JsonObject(
         }
 
     }
-
-    // [: 91 ]: 93  { ->123  } 125
-    //TODO bottleneck try to find better solution
-    private fun moveToEnd(open : Char,close: Char){
-        var count = 0
-
-        do{
-            val c = str[ptr]
-            if(c == open){
-
-                count++
-            }else if(c == close){
-                count--
-            }
-            ptr++
-        }while(count != 0)
-
-
-    }
-
-
 
 
     //TODO check if this is better than returning String?
@@ -172,7 +148,6 @@ class JsonObject(
 
         }
 
-        //return false
     }
 
 

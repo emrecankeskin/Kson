@@ -1,16 +1,15 @@
-
-
 //https://www.microfocus.com/documentation/silk-performer/195/en/silkperformer-195-webhelp-en/GUID-0847DE13-2A2F-44F2-A6E7-214CD703BF84.html
 
-class JsonArray(
+internal class JsonArray(
     private val str: String,
-) {
-
+    internal val start: Int = 0
+){
+    
     val list = ArrayList<Any>()
-    private var ptr = 0
+    internal var ptr = 0
 
     init {
-
+        this.ptr = start
         this.parse()
     }
 
@@ -21,9 +20,9 @@ class JsonArray(
         while(true){
 
             val c = str[ptr]
-
             when(c){
                  '0','1','2','3','4','5','6','7','8','9','-' ->{
+
                      value = parseNumber()
                      list.add(value)
                 }
@@ -33,22 +32,20 @@ class JsonArray(
                 }
                 't' , 'f' ,'n' -> {
                     value = parseBoolean()
+                    list.add(value)
                 }
                 '{' -> {
-                    val start = ptr
-                    moveToEnd('{','}')
-                    value = JsonObject(str.substring(start,ptr))
+
+                    value = JsonObject(str, ptr)
+                    ptr = value.ptr + 1
                     list.add(value)
 
                 }
 
                 '[' -> {
-                    val start = ptr
-                    moveToEnd('[',']')
-
-                    value = JsonArray(str.substring(start,ptr))
+                    value = JsonArray(str, ptr)
+                    ptr = value.ptr + 1
                     list.add(value)
-
 
                 }
                 ',',' ','\n','\t','}' ->{
@@ -59,26 +56,9 @@ class JsonArray(
                     break
                 }
             }
-            ptr++
         }
     }
 
-    private fun moveToEnd(open : Char,close: Char){
-        var count = 0
-
-        do{
-            val c = str[ptr]
-            
-            if(c == open){
-                count++
-            }else if(c == close){
-                count--
-            }
-            ptr++
-        }while(count != 0)
-
-
-    }
 
 
     private fun parseString(): String{
