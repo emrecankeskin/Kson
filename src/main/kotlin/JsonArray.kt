@@ -1,3 +1,5 @@
+import java.util.*
+
 //https://www.microfocus.com/documentation/silk-performer/195/en/silkperformer-195-webhelp-en/GUID-0847DE13-2A2F-44F2-A6E7-214CD703BF84.html
 
 class JsonArray(
@@ -5,7 +7,7 @@ class JsonArray(
     internal val start: Int = 0
 ): JsonElement(){
     
-    val list = ArrayList<JsonElement>()
+    val list = LinkedList<JsonElement>()
     internal var ptr = 0
 
     init {
@@ -17,24 +19,24 @@ class JsonArray(
         ptr++
         var value: JsonElement
 
-        while(true){
+        while(ptr < str.length){
 
             val c = str[ptr]
-            when(c){
-                 '0','1','2','3','4','5','6','7','8','9','-' ->{
+            when{
+                 c.isDigit() || c == '-' ->{
 
                      value = parseNumber()
                      list.add(value)
                 }
-                '"' ->{
+                c == '"' ->{
                     value = parseString()
                     list.add(value)
                 }
-                't' , 'f' ,'n' -> {
+                c == 't' || c ==  'f' || c == 'n' -> {
                     value = parseBoolean()
                     list.add(value)
                 }
-                '{' -> {
+                c == '{' -> {
 
                     value = JsonObject(str, ptr)
                     ptr = value.ptr + 1
@@ -42,17 +44,18 @@ class JsonArray(
 
                 }
 
-                '[' -> {
+                c == '[' -> {
                     value = JsonArray(str, ptr)
                     ptr = value.ptr + 1
                     list.add(value)
 
                 }
-                ',',' ','\n','\t','}' ->{
+                c == ',' || c == ' ' || c =='\n' || c == '\t' || c== '}' ->{
                     ptr++
                     continue
                 }
-                ']' ->{
+
+                c == ']' ->{
                     break
                 }
             }
@@ -65,7 +68,7 @@ class JsonArray(
         // skip starting of string
         val start = ++ptr
 
-        while(true){
+        while(ptr < str.length){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
@@ -73,35 +76,16 @@ class JsonArray(
                 return JsonPrimitive(str.substring(start,ptr-1))
             }
 
-
             if(c == '\\'){
                 ptr++
             }
             ptr++
         }
 
-    }
-
-    private fun parseKey(): String{
-        // skip starting of string
-        val start = ++ptr
-
-        while(true){
-            val c: Char = str[ptr]
-            //if end of value
-            if(c == '\"'){
-                ptr++
-                return str.substring(start,ptr-1)
-            }
-
-
-            if(c == '\\'){
-                ptr++
-            }
-            ptr++
-        }
+        return JsonPrimitive("[ERROR]")
 
     }
+
 
     /**
      * Returns Double or Long
@@ -111,7 +95,7 @@ class JsonArray(
         val start = ptr
         var dot = false
 
-        while(true){
+        while(ptr<str.length){
             val c: Char = str[ptr]
             when{
                 c.isDigit() || c == '-' -> {
@@ -131,11 +115,15 @@ class JsonArray(
             }
         }
 
+        return JsonPrimitive(-1)
     }
+
+
+
     private fun parseBoolean(): JsonElement{
         val start = ptr
 
-        while(true){
+        while(ptr<str.length){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
                 return JsonPrimitive(str.substring(start,ptr).toBoolean())
@@ -144,13 +132,15 @@ class JsonArray(
 
         }
 
+        return JsonPrimitive(false)
     }
 
 
 
-    fun get(index: Int): Any? {
-        return if (index in list.indices) list[index] else null
+    fun get(index: Int): JsonElement? {
+        return if (index < list.size) list[index] else null
     }
+
 
     inline fun <reified T> getAs(index: Int): T? {
         return get(index) as? T

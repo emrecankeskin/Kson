@@ -1,3 +1,5 @@
+import JsonParser.Companion.wsLookUp
+
 /**
  * There is no validation for anything, it assumes that coming json object is valid
  *
@@ -12,8 +14,12 @@ class JsonObject(
     val values = LinkedHashMap<String,JsonElement>()
     internal var ptr: Int
 
+    //private val wsLookUp = BooleanArray(256){false}
+    
 
     init {
+
+
         this.ptr = start
         this.parse()
     }
@@ -30,16 +36,21 @@ class JsonObject(
             ptr++
         }
         //ptr < str.length
-        while(true){
+        while(ptr < str.length){
 
             val c = str[ptr]
-            when(c){
-                '0','1','2','3','4','5','6','7','8','9','-' ->{
+            when{
+                c.isDigit() || c == '-' ->{
                     keyParse = true
                     value = parseNumber()
                     values[key] = value
                 }
-                '"' ->{
+//                digitLookUp[c.code] || digitLookUp[c.code] ->{
+//                    keyParse = true
+//                    value = parseNumber()
+//                    values[key] = value
+//                }
+                c == '"' ->{
                     if(keyParse){
                         keyParse = false
                         key = parseKey()
@@ -50,12 +61,12 @@ class JsonObject(
                     }
 
                 }
-                't' , 'f' ,'n' -> {
+                c == 't' ||  c == 'f' || c == 'n' -> {
                     keyParse = true
                     value = parseBoolean()
                     values[key] = value
                 }
-                '{' -> {
+                c == '{' -> {
 
                     keyParse = true
                     value = JsonObject(str, ptr)
@@ -63,17 +74,22 @@ class JsonObject(
                     values[key] = value
                 }
 
-                '[' -> {
+                c == '[' -> {
                     keyParse = true
                     value = JsonArray(str, ptr)
                     ptr = value.ptr + 1
                     values[key] = value
                 }
-                ',',' ',':','\n','\t' ->{
+//                c == ','|| c == ' ' || c== ':' || c == '\n' || c =='\t' ->{
+//                    ptr++
+//                    continue
+//                }
+                wsLookUp[c.code] ->{
                     ptr++
                     continue
                 }
-                '}' ->{
+
+                c == '}' ->{
                     break
                 }
             }
@@ -89,7 +105,7 @@ class JsonObject(
         // skip starting of string
         val start = ++ptr
 
-        while(true){
+        while(ptr < str.length){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
@@ -103,8 +119,11 @@ class JsonObject(
             ptr++
         }
 
+        return JsonPrimitive("")
+
     }
 
+    //TODO instead of returning string return the index of key
     private fun parseKey(): String{
         // skip starting of string
         val start = ++ptr
@@ -170,11 +189,15 @@ class JsonObject(
     }
 
 
-    fun get(key: String): Any? {
-        return values[key]
-    }
+    fun getSize(): Int = values.size
 
-    inline fun <reified T> getAs(key: String): T? {
-        return get(key) as? T
-    }
+    /**
+     * Returns null Any? if key is not present
+     *
+     * */
+    fun get(key: String): JsonElement?  = values[key]
+
+
+    inline fun <reified T> getAs(key: String): T? = get(key) as? T
+
 }

@@ -16,6 +16,7 @@ class JsonPrimitive(): JsonElement() {
         this.value = bool
     }
 
+
     /**
      * If @param value is not a String it returns null.
      */
