@@ -1,11 +1,11 @@
 //https://www.microfocus.com/documentation/silk-performer/195/en/silkperformer-195-webhelp-en/GUID-0847DE13-2A2F-44F2-A6E7-214CD703BF84.html
 
-internal class JsonArray(
+class JsonArray(
     private val str: String,
     internal val start: Int = 0
-){
+): JsonElement(){
     
-    val list = ArrayList<Any>()
+    val list = ArrayList<JsonElement>()
     internal var ptr = 0
 
     init {
@@ -15,7 +15,7 @@ internal class JsonArray(
 
     private fun parse(){
         ptr++
-        var value: Any
+        var value: JsonElement
 
         while(true){
 
@@ -61,7 +61,28 @@ internal class JsonArray(
 
 
 
-    private fun parseString(): String{
+    private fun parseString(): JsonElement{
+        // skip starting of string
+        val start = ++ptr
+
+        while(true){
+            val c: Char = str[ptr]
+            //if end of value
+            if(c == '\"'){
+                ptr++
+                return JsonPrimitive(str.substring(start,ptr-1))
+            }
+
+
+            if(c == '\\'){
+                ptr++
+            }
+            ptr++
+        }
+
+    }
+
+    private fun parseKey(): String{
         // skip starting of string
         val start = ++ptr
 
@@ -86,7 +107,7 @@ internal class JsonArray(
      * Returns Double or Long
      *
      * */
-    private fun parseNumber(): Number{
+    private fun parseNumber(): JsonElement{
         val start = ptr
         var dot = false
 
@@ -102,22 +123,22 @@ internal class JsonArray(
                 }
                 else -> {
                     return if(dot){
-                        str.substring(start,ptr).toDouble()
+                        JsonPrimitive(str.substring(start,ptr).toDouble())
                     }else{
-                        str.substring(start,ptr).toLong()
+                        JsonPrimitive(str.substring(start,ptr).toLong())
                     }
                 }
             }
         }
 
     }
-    private fun parseBoolean(): Boolean{
+    private fun parseBoolean(): JsonElement{
         val start = ptr
 
         while(true){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
-                return str.substring(start,ptr).toBoolean()
+                return JsonPrimitive(str.substring(start,ptr).toBoolean())
             }
             ptr++
 

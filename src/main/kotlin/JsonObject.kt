@@ -7,11 +7,10 @@
 class JsonObject(
     private val str: String,
     internal val start: Int = 0
-) {
+) : JsonElement() {
 
-    val values = LinkedHashMap<String,Any>()
+    val values = LinkedHashMap<String,JsonElement>()
     internal var ptr: Int
-
 
 
     init {
@@ -24,7 +23,7 @@ class JsonObject(
 
         // 1 0 -> 0 0 -> 1 1
         var keyParse = true
-        var value: Any = Any()
+        var value: JsonElement
         var key  = ""
 
         while(str[ptr] == '{'){
@@ -43,7 +42,7 @@ class JsonObject(
                 '"' ->{
                     if(keyParse){
                         keyParse = false
-                        key = parseString()
+                        key = parseKey()
                     }else{
                         keyParse = true
                         value = parseString()
@@ -86,7 +85,27 @@ class JsonObject(
 
     //TODO check if this is better than returning String?
     //TODO can i build this with stringbuilder and pass escape chars
-    private fun parseString(): String{
+    private fun parseString(): JsonPrimitive{
+        // skip starting of string
+        val start = ++ptr
+
+        while(true){
+            val c: Char = str[ptr]
+            //if end of value
+            if(c == '\"'){
+                ptr++
+                return JsonPrimitive(str.substring(start,ptr-1))
+            }
+            //&& ptr+1 < str.length
+            if(c == '\\'){
+                ptr++
+            }
+            ptr++
+        }
+
+    }
+
+    private fun parseKey(): String{
         // skip starting of string
         val start = ++ptr
 
@@ -110,7 +129,7 @@ class JsonObject(
      * Returns Double or Long
      *
      * */
-    private fun parseNumber(): Number{
+    private fun parseNumber(): JsonPrimitive{
         val start = ptr
         var dot = false
 
@@ -126,9 +145,9 @@ class JsonObject(
                 }
                 else -> {
                     return if(dot){
-                        str.substring(start,ptr).toDouble()
+                        JsonPrimitive(str.substring(start,ptr).toDouble())
                     }else{
-                        str.substring(start,ptr).toLong()
+                        JsonPrimitive(str.substring(start,ptr).toLong())
                     }
                 }
             }
@@ -137,12 +156,12 @@ class JsonObject(
     }
 
 
-    private fun parseBoolean(): Boolean{
+    private fun parseBoolean(): JsonPrimitive{
         val start = ptr
         while(true){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
-                return str.substring(start,ptr).toBoolean()
+                return JsonPrimitive(str.substring(start,ptr).toBoolean())
             }
             ptr++
 
