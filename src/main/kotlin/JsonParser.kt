@@ -1,6 +1,10 @@
 class JsonParser{
 
+    //TODO create buffer for jsonobjects and only store start and end index of values
 
+    /**
+     * static method of parser [parseFromString] with [wsLookUp] which is a table for checking if char is whitespace or not
+     * */
     companion object{
         val wsLookUp = BooleanArray(256).apply {
 
@@ -9,35 +13,20 @@ class JsonParser{
             this[10] = true
             this[32] = true
             this[44] = true
-
             this[58] = true
         }
-//        val digitLookUp = BooleanArray(256).apply{
-//            this[45] = true
-//            this[48] = true
-//            this[49] = true
-//            this[50] = true
-//            this[51] = true
-//            this[52] = true
-//            this[53] = true
-//            this[54] = true
-//            this[55] = true
-//            this[56] = true
-//            this[57] = true
-//        }
 
         fun parseFromString(src: String): JsonElement{
             var ptr = 0
-            while(ptr < src.length){
-                if(src[ptr] == '{'){
-                    return JsonObject(src)
-                }else if(src[ptr] == '[')
-                    return JsonArray(src)
-
+            while(wsLookUp[src[ptr].code]){
                 ptr++
             }
 
-            return JsonPrimitive(-1)
+            if(src[ptr] == '['){
+                return JsonArray(src)
+            }
+
+            return JsonObject(src)
         }
 
 

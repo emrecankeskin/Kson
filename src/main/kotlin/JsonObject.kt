@@ -1,9 +1,11 @@
 import JsonParser.Companion.wsLookUp
 
 /**
- * There is no validation for anything, it assumes that coming json object is valid
+ * There is no validation for anything, it assumes that coming [JsonObject] is valid
+ * @param str source string of json
+ * @param start start index of json elements
  *
- *
+ * @return JsonElement
  * */
 
 class JsonObject(
@@ -25,6 +27,9 @@ class JsonObject(
     }
 
     //Used enums with state-machine like solution, but it was 10 ms slower with 608k char file
+    /**
+     * If given json is not valid it will stick in infinite loop
+     * */
     private fun parse(){
 
         // 1 0 -> 0 0 -> 1 1
@@ -35,21 +40,19 @@ class JsonObject(
         while(str[ptr] == '{'){
             ptr++
         }
-        //ptr < str.length
-        while(ptr < str.length){
+
+
+        while(true){
 
             val c = str[ptr]
+
             when{
+                //TODO bottleneck
                 c.isDigit() || c == '-' ->{
                     keyParse = true
                     value = parseNumber()
                     values[key] = value
                 }
-//                digitLookUp[c.code] || digitLookUp[c.code] ->{
-//                    keyParse = true
-//                    value = parseNumber()
-//                    values[key] = value
-//                }
                 c == '"' ->{
                     if(keyParse){
                         keyParse = false
@@ -63,7 +66,7 @@ class JsonObject(
                 }
                 c == 't' ||  c == 'f' || c == 'n' -> {
                     keyParse = true
-                    value = parseBoolean()
+                    value = parseBoolean(c)
                     values[key] = value
                 }
                 c == '{' -> {
@@ -80,10 +83,8 @@ class JsonObject(
                     ptr = value.ptr + 1
                     values[key] = value
                 }
-//                c == ','|| c == ' ' || c== ':' || c == '\n' || c =='\t' ->{
-//                    ptr++
-//                    continue
-//                }
+
+                //c == ','|| c == ' ' || c== ':' || c == '\n' || c =='\t'
                 wsLookUp[c.code] ->{
                     ptr++
                     continue
@@ -105,12 +106,11 @@ class JsonObject(
         // skip starting of string
         val start = ++ptr
 
-        while(ptr < str.length){
+        while(true){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
-                ptr++
-                return JsonPrimitive(str.substring(start,ptr-1))
+                return JsonPrimitive(str.substring(start,ptr++))
             }
             //&& ptr+1 < str.length
             if(c == '\\'){
@@ -119,7 +119,6 @@ class JsonObject(
             ptr++
         }
 
-        return JsonPrimitive("")
 
     }
 
@@ -129,19 +128,17 @@ class JsonObject(
         val start = ++ptr
 
         while(true){
-            val c: Char = str[ptr]
+            val c: Char = str[ptr++]
             //if end of value
             if(c == '\"'){
-                ptr++
-                return str.substring(start,ptr-1)
+                //ptr++
+                return str.substring(start,ptr++) //bottleneck
             }
-            //&& ptr+1 < str.length
             if(c == '\\'){
                 ptr++
             }
-            ptr++
-        }
 
+        }
     }
 
     /**
@@ -175,12 +172,18 @@ class JsonObject(
     }
 
 
-    private fun parseBoolean(): JsonPrimitive{
-        val start = ptr
+    private fun parseBoolean(firstChar: Char): JsonPrimitive{
+
         while(true){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
-                return JsonPrimitive(str.substring(start,ptr).toBoolean())
+                //bottleneck
+                when(firstChar){
+                    't' -> return JsonPrimitive(true)
+                    'f' -> return JsonPrimitive(false)
+                    'n' -> return JsonPrimitive(null)
+                }
+
             }
             ptr++
 

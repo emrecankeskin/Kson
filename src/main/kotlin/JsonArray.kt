@@ -19,12 +19,12 @@ class JsonArray(
         ptr++
         var value: JsonElement
 
-        while(ptr < str.length){
+        while(true){
 
             val c = str[ptr]
             when{
-                 c.isDigit() || c == '-' ->{
 
+                c.isDigit() || c == '-' ->{
                      value = parseNumber()
                      list.add(value)
                 }
@@ -33,7 +33,7 @@ class JsonArray(
                     list.add(value)
                 }
                 c == 't' || c ==  'f' || c == 'n' -> {
-                    value = parseBoolean()
+                    value = parseBoolean(c)
                     list.add(value)
                 }
                 c == '{' -> {
@@ -41,7 +41,6 @@ class JsonArray(
                     value = JsonObject(str, ptr)
                     ptr = value.ptr + 1
                     list.add(value)
-
                 }
 
                 c == '[' -> {
@@ -68,34 +67,35 @@ class JsonArray(
         // skip starting of string
         val start = ++ptr
 
-        while(ptr < str.length){
+        while(true){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
-                ptr++
-                return JsonPrimitive(str.substring(start,ptr-1))
-            }
 
+                return JsonPrimitive(str.substring(start,ptr++))
+            }
             if(c == '\\'){
                 ptr++
             }
             ptr++
         }
 
-        return JsonPrimitive("[ERROR]")
 
     }
+
+
 
 
     /**
      * Returns Double or Long
      *
      * */
+    //TODO find better ways to parse number
     private fun parseNumber(): JsonElement{
         val start = ptr
         var dot = false
 
-        while(ptr<str.length){
+        while(true){
             val c: Char = str[ptr]
             when{
                 c.isDigit() || c == '-' -> {
@@ -105,8 +105,10 @@ class JsonArray(
                     dot = true
                     ptr++
                 }
+                //TODO bottleneck
                 else -> {
                     return if(dot){
+                        //JsonPrimitive(str.substring(start,ptr).toDouble())
                         JsonPrimitive(str.substring(start,ptr).toDouble())
                     }else{
                         JsonPrimitive(str.substring(start,ptr).toLong())
@@ -115,26 +117,26 @@ class JsonArray(
             }
         }
 
-        return JsonPrimitive(-1)
     }
 
+    private fun parseBoolean(firstChar: Char): JsonPrimitive{
 
-
-    private fun parseBoolean(): JsonElement{
-        val start = ptr
-
-        while(ptr<str.length){
+        while(true){
             val c: Char = str[ptr]
             if(c == ',' || c == '}'){
-                return JsonPrimitive(str.substring(start,ptr).toBoolean())
+                //bottleneck
+                when(firstChar){
+                    't' -> return JsonPrimitive(true)
+                    'f' -> return JsonPrimitive(false)
+                    'n' -> return JsonPrimitive(null)
+                }
+
             }
             ptr++
 
         }
 
-        return JsonPrimitive(false)
     }
-
 
 
     fun get(index: Int): JsonElement? {
