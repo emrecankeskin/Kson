@@ -4,11 +4,11 @@ import java.util.*
 
 class JsonArray(
     private val str: String,
-    internal val start: Int = 0
+    private val start: Int = 0
 ): JsonElement(){
     
-    val list = LinkedList<JsonElement>()
-    internal var ptr = 0
+    private val list = LinkedList<JsonElement>()
+    @PublishedApi internal var ptr = 0
 
     init {
         this.ptr = start
@@ -139,7 +139,12 @@ class JsonArray(
     }
 
 
-    fun get(index: Int): JsonElement? {
+    /**
+     * @param index
+     * Returns the JsonElement at index
+     * If index exceeds number of elements it returns null
+     * */
+    operator fun get(index: Int): JsonElement? {
         return if (index < list.size) list[index] else null
     }
 

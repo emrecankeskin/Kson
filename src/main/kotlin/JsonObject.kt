@@ -10,17 +10,15 @@ import JsonParser.Companion.wsLookUp
 
 class JsonObject(
     private val str: String,
-    internal val start: Int = 0
+    private val start: Int = 0
 ) : JsonElement() {
 
-    val values = LinkedHashMap<String,JsonElement>()
-    internal var ptr: Int
+    private val values = LinkedHashMap<String,JsonElement>()
+    @PublishedApi internal var ptr: Int
 
-    //private val wsLookUp = BooleanArray(256){false}
     
 
     init {
-
 
         this.ptr = start
         this.parse()
@@ -128,16 +126,16 @@ class JsonObject(
         val start = ++ptr
 
         while(true){
-            val c: Char = str[ptr++]
+            val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
-                //ptr++
-                return str.substring(start,ptr++) //bottleneck
+                ptr++
+                return str.substring(start,ptr-1) //bottleneck
             }
             if(c == '\\'){
                 ptr++
             }
-
+            ptr++
         }
     }
 
@@ -198,9 +196,16 @@ class JsonObject(
      * Returns null Any? if key is not present
      *
      * */
-    fun get(key: String): JsonElement?  = values[key]
+
+
+    operator fun get(s: String):  JsonElement? {
+        return values[s]
+    }
+
+    //fun get(key: String): JsonElement?  = values[key]
 
 
     inline fun <reified T> getAs(key: String): T? = get(key) as? T
+
 
 }

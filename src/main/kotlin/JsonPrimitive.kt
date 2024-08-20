@@ -1,7 +1,7 @@
 class JsonPrimitive(): JsonElement() {
 
 
-    @PublishedApi internal  var value: Any? = null
+    @PublishedApi internal var value: Any? = null
 
     /**
      * @param str source string
@@ -17,17 +17,24 @@ class JsonPrimitive(): JsonElement() {
         this.value = num
     }
 
+    /**
+     * @param bool source
+     * */
     constructor(bool: Boolean): this(){
         this.value = bool
     }
 
+
+    /**
+     * @param none source representing null for JSON
+     * */
     constructor(none: Nothing?): this(){
         this.value = null
     }
 
 
     /**
-     * If @param value is not a String it returns null.
+     * If value is not instance of T it will return null
      */
     inline fun <reified T> getAs(): T? {
         return value as? T

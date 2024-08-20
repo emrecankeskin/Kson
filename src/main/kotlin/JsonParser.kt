@@ -1,6 +1,5 @@
 class JsonParser{
 
-    //TODO create buffer for jsonobjects and only store start and end index of values
 
     /**
      * static method of parser [parseFromString] with [wsLookUp] which is a table for checking if char is whitespace or not
@@ -18,6 +17,7 @@ class JsonParser{
 
         fun parseFromString(src: String): JsonElement{
             var ptr = 0
+
             while(wsLookUp[src[ptr].code]){
                 ptr++
             }
