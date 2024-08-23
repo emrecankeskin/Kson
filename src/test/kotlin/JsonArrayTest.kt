@@ -13,13 +13,18 @@ class JsonArrayTest {
 
     @Test
     fun getValues() {
-        val arr = listOf(10L, 20L, true, 40L, "Nested Array")
-        val obj = parser.values["obj"] as JsonObject
-        val jArr = (parser.values["arr"] as JsonArray).list
-        assertEquals(obj.values["Name"],"Nested Object" )
+        val arr = listOf(
+            JsonPrimitive(10L),
+            JsonPrimitive(20L),
+            JsonPrimitive(true),
+            JsonPrimitive(40L),
+            JsonPrimitive("Nested Array"))
+        val obj = parser.getAs<JsonObject>("obj")
+        val jArr = parser.getAs<JsonArray>("arr")
+        assertEquals(obj?.getAs<JsonPrimitive>("Name").toString(),"Nested Object" )
 
         for(i in arr.indices){
-            assertEquals(arr[i],jArr[i])
+            assertEquals(arr[i].value, jArr?.getAs<JsonPrimitive>(i)?.value)
         }
     }
 }

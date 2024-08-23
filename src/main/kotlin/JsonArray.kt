@@ -2,11 +2,16 @@ import java.util.*
 
 //https://www.microfocus.com/documentation/silk-performer/195/en/silkperformer-195-webhelp-en/GUID-0847DE13-2A2F-44F2-A6E7-214CD703BF84.html
 
+
+//TODO add iterator
+
+
 class JsonArray(
     private val str: String,
     private val start: Int = 0
-): JsonElement(){
-    
+): JsonElement(),Iterable<JsonElement>{
+
+
     private val list = LinkedList<JsonElement>()
     @PublishedApi internal var ptr = 0
 
@@ -90,25 +95,22 @@ class JsonArray(
      * Returns Double or Long
      *
      * */
-    //TODO find better ways to parse number
-    private fun parseNumber(): JsonElement{
+    private fun parseNumber(): JsonPrimitive{
         val start = ptr
         var dot = false
 
         while(true){
             val c: Char = str[ptr]
             when{
-                c.isDigit() || c == '-' -> {
+                c.isDigit() || c == '-'-> {
                     ptr++
                 }
                 c == '.' || c == 'e' || c == 'E' -> {
                     dot = true
                     ptr++
                 }
-                //TODO bottleneck
                 else -> {
                     return if(dot){
-                        //JsonPrimitive(str.substring(start,ptr).toDouble())
                         JsonPrimitive(str.substring(start,ptr).toDouble())
                     }else{
                         JsonPrimitive(str.substring(start,ptr).toLong())
@@ -148,8 +150,18 @@ class JsonArray(
         return if (index < list.size) list[index] else null
     }
 
+    fun size() = list.size
 
+    /**
+     * @param index
+     * Returns the T at index
+     * If index exceeds number of elements it returns null
+     * */
     inline fun <reified T> getAs(index: Int): T? {
         return get(index) as? T
+    }
+
+    override fun iterator(): Iterator<JsonElement> {
+        return list.iterator()
     }
 }

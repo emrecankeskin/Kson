@@ -5,6 +5,8 @@ class JsonParser{
      * static method of parser [parseFromString] with [wsLookUp] which is a table for checking if char is whitespace or not
      * */
     companion object{
+
+
         val wsLookUp = BooleanArray(256).apply {
 
             //white space
@@ -14,6 +16,7 @@ class JsonParser{
             this[44] = true
             this[58] = true
         }
+
 
         fun parseFromString(src: String): JsonElement{
             var ptr = 0

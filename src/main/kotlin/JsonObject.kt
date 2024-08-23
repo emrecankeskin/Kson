@@ -11,12 +11,12 @@ import JsonParser.Companion.wsLookUp
 class JsonObject(
     private val str: String,
     private val start: Int = 0
-) : JsonElement() {
+) : JsonElement(),Iterable<Map.Entry<String,JsonElement>> {
 
     private val values = LinkedHashMap<String,JsonElement>()
+
     @PublishedApi internal var ptr: Int
 
-    
 
     init {
 
@@ -30,7 +30,6 @@ class JsonObject(
      * */
     private fun parse(){
 
-        // 1 0 -> 0 0 -> 1 1
         var keyParse = true
         var value: JsonElement
         var key  = ""
@@ -46,7 +45,7 @@ class JsonObject(
 
             when{
                 //TODO bottleneck
-                c.isDigit() || c == '-' ->{
+                c.isDigit() || c == '-'->{
                     keyParse = true
                     value = parseNumber()
                     values[key] = value
@@ -85,7 +84,6 @@ class JsonObject(
                 //c == ','|| c == ' ' || c== ':' || c == '\n' || c =='\t'
                 wsLookUp[c.code] ->{
                     ptr++
-                    continue
                 }
 
                 c == '}' ->{
@@ -98,11 +96,14 @@ class JsonObject(
     }
 
 
-    //TODO check if this is better than returning String?
-    //TODO can i build this with stringbuilder and pass escape chars
+
+    /**
+     * Starts from ptr+1 value and scans for '"'  char
+     * */
     private fun parseString(): JsonPrimitive{
         // skip starting of string
         val start = ++ptr
+
 
         while(true){
             val c: Char = str[ptr]
@@ -110,7 +111,6 @@ class JsonObject(
             if(c == '\"'){
                 return JsonPrimitive(str.substring(start,ptr++))
             }
-            //&& ptr+1 < str.length
             if(c == '\\'){
                 ptr++
             }
@@ -120,13 +120,14 @@ class JsonObject(
 
     }
 
-    //TODO instead of returning string return the index of key
+
     private fun parseKey(): String{
         // skip starting of string
+
         val start = ++ptr
 
         while(true){
-            val c: Char = str[ptr]
+            val c = str[ptr]
             //if end of value
             if(c == '\"'){
                 ptr++
@@ -190,22 +191,28 @@ class JsonObject(
     }
 
 
+    //TEST
+
+
+
+
+
     fun getSize(): Int = values.size
 
     /**
-     * Returns null Any? if key is not present
+     * Returns null JsonElement? if key is not present
      *
      * */
-
-
     operator fun get(s: String):  JsonElement? {
         return values[s]
     }
 
-    //fun get(key: String): JsonElement?  = values[key]
-
 
     inline fun <reified T> getAs(key: String): T? = get(key) as? T
+
+    override fun iterator(): Iterator<Map.Entry<String, JsonElement>> {
+        return values.entries.iterator()
+    }
 
 
 }

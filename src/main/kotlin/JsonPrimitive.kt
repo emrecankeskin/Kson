@@ -1,11 +1,15 @@
 class JsonPrimitive(): JsonElement() {
 
 
-    @PublishedApi internal var value: Any? = null
+    //TODO implement look up table for checking element type
+
+
+    var value: Any? = null
 
     /**
      * @param str source string
      * */
+
     constructor(str: String): this(){
         this.value = str
     }
@@ -32,11 +36,12 @@ class JsonPrimitive(): JsonElement() {
         this.value = null
     }
 
+    override fun toString(): String {
+        return value.toString()
+    }
 
     /**
      * If value is not instance of T it will return null
      */
-    inline fun <reified T> getAs(): T? {
-        return value as? T
-    }
+
 }

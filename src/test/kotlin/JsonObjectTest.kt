@@ -30,7 +30,7 @@ class JsonObjectTest {
         test["audioChannels"] = 2L
 
         for((k,_) in test){
-            assertEquals(parser.values[k],test[k])
+            assertEquals(parser.getAs<JsonPrimitive>(k)?.value,test[k])
         }
     }
 
@@ -40,7 +40,7 @@ class JsonObjectTest {
         test["start"] = "0"
         test["end"] = "219"
         for((k,_) in test){
-            assertEquals((parser.values["initRange"] as JsonObject).values[k],test[k])
+            assertEquals((parser.getAs<JsonObject>("initRange"))?.getAs<JsonPrimitive>(k)?.value,test[k])
         }
     }
 }
