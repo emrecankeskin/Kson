@@ -24,7 +24,6 @@ class JsonObject(
         this.parse()
     }
 
-    //Used enums with state-machine like solution, but it was 10 ms slower with 608k char file
     /**
      * If given json is not valid it will stick in infinite loop
      * */
@@ -44,7 +43,6 @@ class JsonObject(
             val c = str[ptr]
 
             when{
-                //TODO bottleneck
                 c.isDigit() || c == '-'->{
                     keyParse = true
                     value = parseNumber()
@@ -171,13 +169,17 @@ class JsonObject(
     }
 
 
+    /**
+     * Moving cursor to end of value , object or array returns according to first chzr
+     *
+     * @param firstChar t f n case-insensitive
+     * */
     private fun parseBoolean(firstChar: Char): JsonPrimitive{
 
         while(true){
             val c: Char = str[ptr]
-            if(c == ',' || c == '}'){
-                //bottleneck
-                when(firstChar){
+            if(c == ',' || c == '}' || c == ']'){
+                when(firstChar.lowercaseChar()){
                     't' -> return JsonPrimitive(true)
                     'f' -> return JsonPrimitive(false)
                     'n' -> return JsonPrimitive(null)

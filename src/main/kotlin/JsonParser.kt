@@ -9,7 +9,9 @@ class JsonParser{
 
         val wsLookUp = BooleanArray(256).apply {
 
-            //white space
+            /**
+             * white space chars
+            * */
             this[9] = true
             this[10] = true
             this[32] = true
@@ -25,6 +27,9 @@ class JsonParser{
                 ptr++
             }
 
+            /**
+             * if starts with array instead of object
+             * */
             if(src[ptr] == '['){
                 return JsonArray(src)
             }

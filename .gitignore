@@ -42,5 +42,4 @@ bin/
 
 
 .DS_Store
-/src/main/test/
 /src/main/kotlin/main.kt
