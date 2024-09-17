@@ -1,11 +1,25 @@
+import JsonCharTable.Companion.CAPITAL_E
+import JsonCharTable.Companion.CLOSE_BRACKET
+import JsonCharTable.Companion.CLOSE_CURLY
+import JsonCharTable.Companion.COMMA
+import JsonCharTable.Companion.DASH
+import JsonCharTable.Companion.DOT
+import JsonCharTable.Companion.OPEN_BRACKET
+import JsonCharTable.Companion.OPEN_CURLY
+import JsonCharTable.Companion.QUOT
+import JsonCharTable.Companion.SMALL_E
+import JsonCharTable.Companion.SMALL_F
+import JsonCharTable.Companion.SMALL_N
+import JsonCharTable.Companion.SMALL_T
+import JsonCharTable.Companion.numTable
 import java.util.*
 
 //https://www.microfocus.com/documentation/silk-performer/195/en/silkperformer-195-webhelp-en/GUID-0847DE13-2A2F-44F2-A6E7-214CD703BF84.html
 
 
 
-class JsonArray1(
-    private val str: String,
+class JsonArray(
+    private val src: String,
     private val start: Int = 0
 ): JsonElement(),Iterable<JsonElement>{
 
@@ -18,52 +32,19 @@ class JsonArray1(
         this.parse()
     }
 
-    companion object{
-
-        val wsLookUp = BooleanArray(256).apply {
-
-            /**
-             * white space chars
-             * */
-            this[9] = true
-            this[10] = true
-            this[32] = true
-            this[44] = true
-            this[58] = true
-        }
-
-        const val OPEN_CURLY = '{'
-        const val CLOSE_CURLY = '}'
-
-        const val OPEN_BRACKET = '['
-        const val CLOSE_BRACKET = ']'
-
-        const val CAPITAL_E = 'E'
-        const val SMALL_E = 'e'
-
-        const val SMALL_T = 't'
-        const val SMALL_F = 'f'
-        const val SMALL_N = 'n'
-
-        const val DOT = '.'
-        const val COMMA = ','
-
-        const val QUOT = '"'
-        const val DASH = '-'
-
-    }
 
 
     private fun parse(){
-        ptr++
+        ptr += 1
         var value: JsonElement
+        val str = this.src
 
         while(true){
 
             val c = str[ptr]
             when{
 
-                c.isDigit() || c == DASH ->{
+                numTable[c.code] || c == DASH ->{
                      value = parseNumber()
                      list.add(value)
                 }
@@ -108,17 +89,19 @@ class JsonArray1(
     private fun parseString(): JsonPrimitive{
         // skip starting of string
         val start = ++ptr
+        val str = this.src
 
         while(true){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
-                return JsonPrimitive(str.substring(start,ptr++))
+                ptr += 1
+                return JsonPrimitive(str.subSequence(start,ptr - 1).toString())
             }
             if(c == '\\'){
-                ptr++
+                ptr += 1
             }
-            ptr++
+            ptr += 1
         }
 
 
@@ -132,29 +115,38 @@ class JsonArray1(
      * */
     private fun parseNumber(): JsonPrimitive{
         val start = ptr
+        val str = this.src
         var dot = false
         while(true){
             val c: Char = str[ptr]
             when{
-                c.isDigit() || c == DASH -> {
-                    ptr++
+                numTable[c.code] || c == DASH -> {
+                    ptr += 1
                 }
                 c == DOT || c == SMALL_E || c == CAPITAL_E -> {
                     dot = true
-                    ptr++
+                    ptr += 1
                 }
                 else -> {
+                    /*
+                    * Using subSequence() generates less bytecode instructions
+                    * */
                     return if(dot){
-                        JsonPrimitive(str.substring(start,ptr).toDouble())
+                        //JsonPrimitive(str.substring(start,ptr).toDouble())
+                        JsonPrimitive(str.subSequence(start,ptr).toString().toDouble())
                     }else{
-                        JsonPrimitive(str.substring(start,ptr).toLong())
+
+                        //JsonPrimitive(str.substring(start,ptr).toLong())
+                        JsonPrimitive(str.subSequence(start,ptr).toString().toLong())
                     }
                 }
             }
         }
+
     }
 
     private fun parseBoolean(firstChar: Char): JsonPrimitive{
+        val str = this.src
 
         while(true){
             val c: Char = str[ptr]
@@ -166,7 +158,7 @@ class JsonArray1(
                 }
 
             }
-            ptr++
+            ptr += 1
 
         }
 

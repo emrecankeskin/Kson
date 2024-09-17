@@ -1,4 +1,18 @@
-import JsonParser.Companion.wsLookUp
+import JsonCharTable.Companion.CAPITAL_E
+import JsonCharTable.Companion.CLOSE_BRACKET
+import JsonCharTable.Companion.CLOSE_CURLY
+import JsonCharTable.Companion.COMMA
+import JsonCharTable.Companion.DASH
+import JsonCharTable.Companion.DOT
+import JsonCharTable.Companion.OPEN_BRACKET
+import JsonCharTable.Companion.OPEN_CURLY
+import JsonCharTable.Companion.QUOT
+import JsonCharTable.Companion.SMALL_E
+import JsonCharTable.Companion.SMALL_F
+import JsonCharTable.Companion.SMALL_N
+import JsonCharTable.Companion.SMALL_T
+import JsonCharTable.Companion.numTable
+import JsonCharTable.Companion.wsLookUp
 
 /**
  * There is no validation for anything, it assumes that coming [JsonObject] is valid
@@ -9,7 +23,7 @@ import JsonParser.Companion.wsLookUp
  * */
 
 class JsonObject(
-    private val str: String,
+    private val src: String,
     private val start: Int = 0
 ) : JsonElement(),Iterable<Map.Entry<String,JsonElement>> {
 
@@ -32,9 +46,10 @@ class JsonObject(
         var keyParse = true
         var value: JsonElement
         var key  = ""
+        val str = this.src
 
-        while(str[ptr] == '{'){
-            ptr++
+        while(str[ptr] == OPEN_CURLY){
+            ptr += 1
         }
 
 
@@ -43,12 +58,12 @@ class JsonObject(
             val c = str[ptr]
 
             when{
-                c.isDigit() || c == '-'->{
+                numTable[c.code] || c == DASH->{
                     keyParse = true
                     value = parseNumber()
                     values[key] = value
                 }
-                c == '"' ->{
+                c == QUOT ->{
                     if(keyParse){
                         keyParse = false
                         key = parseKey()
@@ -59,12 +74,12 @@ class JsonObject(
                     }
 
                 }
-                c == 't' ||  c == 'f' || c == 'n' -> {
+                c == SMALL_T ||  c == SMALL_F || c == SMALL_N -> {
                     keyParse = true
                     value = parseBoolean(c)
                     values[key] = value
                 }
-                c == '{' -> {
+                c == OPEN_CURLY -> {
 
                     keyParse = true
                     value = JsonObject(str, ptr)
@@ -72,7 +87,7 @@ class JsonObject(
                     values[key] = value
                 }
 
-                c == '[' -> {
+                c == OPEN_BRACKET -> {
                     keyParse = true
                     value = JsonArray(str, ptr)
                     ptr = value.ptr + 1
@@ -80,11 +95,12 @@ class JsonObject(
                 }
 
                 //c == ','|| c == ' ' || c== ':' || c == '\n' || c =='\t'
+                //wsLookUp[c.code]
                 wsLookUp[c.code] ->{
-                    ptr++
+                    ptr += 1
                 }
 
-                c == '}' ->{
+                c == CLOSE_CURLY ->{
                     break
                 }
             }
@@ -101,18 +117,20 @@ class JsonObject(
     private fun parseString(): JsonPrimitive{
         // skip starting of string
         val start = ++ptr
-
+        val str = this.src
 
         while(true){
             val c: Char = str[ptr]
             //if end of value
             if(c == '\"'){
-                return JsonPrimitive(str.substring(start,ptr++))
+                ptr += 1
+                //return JsonPrimitive(str.substring(start,ptr - 1))
+                return JsonPrimitive(str.subSequence(start,ptr - 1).toString())
             }
             if(c == '\\'){
-                ptr++
+                ptr += 1
             }
-            ptr++
+            ptr += 1
         }
 
 
@@ -121,20 +139,20 @@ class JsonObject(
 
     private fun parseKey(): String{
         // skip starting of string
-
         val start = ++ptr
-
+        val str = this.src
         while(true){
             val c = str[ptr]
             //if end of value
             if(c == '\"'){
-                ptr++
-                return str.substring(start,ptr-1) //bottleneck
+                ptr += 1
+                //return str.substring(start,ptr-1) //13 inst
+                return str.subSequence(start,ptr-1).toString() // 10 inst
             }
             if(c == '\\'){
-                ptr++
+                ptr += 1
             }
-            ptr++
+            ptr += 1
         }
     }
 
@@ -144,23 +162,29 @@ class JsonObject(
      * */
     private fun parseNumber(): JsonPrimitive{
         val start = ptr
+        val str = this.src
         var dot = false
-
         while(true){
             val c: Char = str[ptr]
             when{
-                c.isDigit() || c == '-' -> {
-                    ptr++
+                numTable[c.code] || c == DASH -> {
+                    ptr += 1
                 }
-                c == '.' || c == 'e' || c == 'E' -> {
+                c == DOT || c == SMALL_E || c == CAPITAL_E -> {
                     dot = true
-                    ptr++
+                    ptr += 1
                 }
                 else -> {
+                    /*
+                    * Using subSequence() generates less bytecode instructions
+                    * */
                     return if(dot){
-                        JsonPrimitive(str.substring(start,ptr).toDouble())
+                        //JsonPrimitive(str.substring(start,ptr).toDouble())
+                        JsonPrimitive(str.subSequence(start,ptr).toString().toDouble())
                     }else{
-                        JsonPrimitive(str.substring(start,ptr).toLong())
+
+                        //JsonPrimitive(str.substring(start,ptr).toLong())
+                        JsonPrimitive(str.subSequence(start,ptr).toString().toLong())
                     }
                 }
             }
@@ -175,26 +199,22 @@ class JsonObject(
      * @param firstChar t f n case-insensitive
      * */
     private fun parseBoolean(firstChar: Char): JsonPrimitive{
-
+        val str = this.src
         while(true){
             val c: Char = str[ptr]
-            if(c == ',' || c == '}' || c == ']'){
+            if(c == COMMA || c == CLOSE_CURLY || c == CLOSE_BRACKET){
                 when(firstChar.lowercaseChar()){
-                    't' -> return JsonPrimitive(true)
-                    'f' -> return JsonPrimitive(false)
-                    'n' -> return JsonPrimitive(null)
+                    SMALL_T -> return JsonPrimitive(true)
+                    SMALL_F -> return JsonPrimitive(false)
+                    SMALL_N -> return JsonPrimitive(null)
                 }
 
             }
-            ptr++
+            ptr += 1
 
         }
 
     }
-
-
-    //TEST
-
 
 
 

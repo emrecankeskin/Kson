@@ -9,7 +9,6 @@ class JsonPrimitive(): JsonElement() {
     /**
      * @param str source string
      * */
-
     constructor(str: String): this(){
         this.value = str
     }

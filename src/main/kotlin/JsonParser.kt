@@ -6,12 +6,11 @@ class JsonParser{
      * */
     companion object{
 
-
-        val wsLookUp = BooleanArray(256).apply {
+        private val wsLookUp = BooleanArray(256).apply {
 
             /**
              * white space chars
-            * */
+             * */
             this[9] = true
             this[10] = true
             this[32] = true
@@ -24,7 +23,7 @@ class JsonParser{
             var ptr = 0
 
             while(wsLookUp[src[ptr].code]){
-                ptr++
+                ptr += 1
             }
 
             /**
